@@ -125,7 +125,7 @@ Para acessar as informações via UART envie mensagens em formato MODBUS com o s
 | Endereço da ESP32 | Código |	Sub-código + Matricula | Comando de Solicitação de Dados |	Mensagem de Retorno |
 |:-:|:-:|:-:|:--|:--|
 | **0x01** | **0x23** | **0xC1** N N N N |	Solicita Temperatura Interna  | 0x00 0x23 0xC1 + float (4 bytes) |
-| **0x01** | **0x23** | **0xC2** N N N N |	Solicita Temperatura Potenciômetro	| 0x00 0x23 0xC2 + float (4 bytes) |
+| **0x01** | **0x23** | **0xC2** N N N N |	Solicita Temperatura de Referência	| 0x00 0x23 0xC2 + float (4 bytes) |
 | **0x01** | **0x23** | **0xC3** N N N N |	Lê comandos do usuário  | 0x00 0x23 0xC3 + int (4 bytes de comando) | 
 | **0x01** | **0x16** | **0xD1** N N N N |	Envia sinal de controle Int (4 bytes) | - |
 | **0x01** | **0x16** | **0xD2** N N N N |	Envia sinal de Referência Float (4 bytes) | - |
