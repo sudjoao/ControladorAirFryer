@@ -130,9 +130,10 @@ Para acessar as informações via UART envie mensagens em formato MODBUS com o s
 | **0x01** | **0x16** | **0xD1** N N N N |	Envia sinal de controle Int (4 bytes) | - |
 | **0x01** | **0x16** | **0xD2** N N N N |	Envia sinal de Referência Float (4 bytes) | - |
 | **0x01** | **0x16** | **0xD3** N N N N |	Envia Estado do Sistema (Ligado = 1 / Desligado = 0) | 0x00 0x16 0xD3 + int (4 bytes de estado) | 
-<!-- | **0x01** | **0x16** | **0xD4** N N N N |	Modo de Controle (Manual (Botões) = 0 / Pré-programado = 1) (1 byte) | 0x00 0x16 0xD4 + int (4 bytes de modo de controle) |  -->
 | **0x01** | **0x16** | **0xD5** N N N N |	Envia Estado de Funcionamento (Funcionando = 1 / Parado = 0) | 0x00 0x16 0xD5 + int (4 bytes de estado) | 
 | **0x01** | **0x16** | **0xD6** N N N N |	Envia valor do Temporizador (Inteiro) | 0x00 0x16 0xD6 + int (4 bytes de estado) | 
+
+<!-- | **0x01** | **0x16** | **0xD4** N N N N |	Modo de Controle (Manual (Botões) = 0 / Pré-programado = 1) (1 byte) | 0x00 0x16 0xD4 + int (4 bytes de modo de controle) |  -->
 Obs: todas as mensagens devem ser enviadas com o CRC e também recebidas verificando o CRC. Caso esta verificação não seja válida, a mensagem deverá ser descartada e uma nova solicitação deverá ser realizada.
 
 <p style="text-align: left;">Tabela 2 - Comandos de Usuário via UART</p>
