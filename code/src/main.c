@@ -43,7 +43,29 @@ void debugMenu(){
     printf("8. Envia valor do Temporizador\n");
 }
 
-void printOutput(int option, unsigned char* buffer, int size){}
+int contains(char item, char *list, int size){
+    for(int i=0; i<size; i++){
+        if(item == list[i])
+            return 1;
+    }
+    return 0;
+}
+
+void printOutput(char subcode, unsigned char* buffer, int size){
+    char float_subcodes[2] = {0xC1, 0xC2};
+    char data[7];
+    memcpy(&data, buffer, size);
+    if(contains(subcode, float_subcodes, 2)){
+        double output;
+        memcpy(&output, &data[3], sizeof(double));
+        printf("Output: %lf\n", output);
+    }else {
+        int output;
+        memcpy(&output, &data[3], sizeof(int));
+        printf("Output: %d\n", output);
+    }
+
+}
 
 void sendMessage(char code, char subcode, int uart0_filestream ){
     unsigned char infos[7] = {0x01, code, subcode, 3, 9, 1, 0};
@@ -68,12 +90,12 @@ void sendMessage(char code, char subcode, int uart0_filestream ){
     }
 }
 
-void readOutput(int uart0_filestream){
+void readOutput(char subcode, int uart0_filestream){
     if (uart0_filestream != -1)
     {
         printf("tentando ler\n");
-        unsigned char rx_buffer[256];
-        int rx_length = read(uart0_filestream, (void*)rx_buffer, 255);     
+        unsigned char rx_buffer[20];
+        int rx_length = read(uart0_filestream, (void*)rx_buffer, 20);     
         if (rx_length < 0)
         {
             printf("Erro na leitura.\n");
@@ -84,10 +106,10 @@ void readOutput(int uart0_filestream){
         }
         else
         {
-            printf("Consegui ler =)\n");
+            rx_buffer[rx_length] = '\0';
+            printf("size: %d\ncontent: %s\n", rx_length, rx_buffer);
+            printOutput(subcode, rx_buffer, rx_length);
         }
-    }else{
-        printf("Opaaaaaaa");
     }
 }
 
@@ -95,36 +117,35 @@ void readOutput(int uart0_filestream){
 int main(int argc, const char * argv[]) {
     int option;
     int uart0_filestream = -1;
+    uart0_filestream = open("/dev/serial0", O_RDWR | O_NOCTTY | O_NDELAY);
     do {
         debugMenu();
         scanf("%d", &option);
+        if(option > 0 && option <9){
+            if (uart0_filestream == -1)
+            {
+                printf("Erro - Não foi possível iniciar a UART.\n");
+            }
+            else
+            {
+                printf("UART inicializada!\n");
+            }    
+            struct termios options;
+            tcgetattr(uart0_filestream, &options);
+            options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+            options.c_iflag = IGNPAR;
+            options.c_oflag = 0;
+            options.c_lflag = 0;
+            tcflush(uart0_filestream, TCIFLUSH);
+            tcsetattr(uart0_filestream, TCSANOW, &options);
 
+            char code = getCode(option); 
+            char subcode = getSubCode(option);
 
-        uart0_filestream = open("/dev/serial0", O_RDWR | O_NOCTTY | O_NDELAY);
-        if (uart0_filestream == -1)
-        {
-            printf("Erro - Não foi possível iniciar a UART.\n");
+            sendMessage(code, subcode, uart0_filestream);
+            sleep(1);
+            readOutput(subcode, uart0_filestream);
         }
-        else
-        {
-            printf("UART inicializada!\n");
-        }    
-        struct termios options;
-        tcgetattr(uart0_filestream, &options);
-        options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-        options.c_iflag = IGNPAR;
-        options.c_oflag = 0;
-        options.c_lflag = 0;
-        tcflush(uart0_filestream, TCIFLUSH);
-        tcsetattr(uart0_filestream, TCSANOW, &options);
-
-        char code = getCode(option); 
-        char subcode = getSubCode(option);
-
-        sendMessage(code, subcode, uart0_filestream);
-        sleep(1);
-        readOutput(uart0_filestream);
-        
     } while(option != 0);
     close(uart0_filestream);
    return 0;
