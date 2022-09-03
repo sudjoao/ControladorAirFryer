@@ -35,6 +35,7 @@
 /******************************************************************************/
 /*!                         Own header files                                  */
 #include "bme280.h"
+#include "vars.h"
 
 /******************************************************************************/
 /*!                               Structures                                  */
@@ -197,7 +198,7 @@ void print_sensor_data(struct bme280_data *comp_data)
     hum = 1.0f / 1024.0f * comp_data->humidity;
 #endif
 #endif
-    printf("%0.2lf deg C, %0.2lf hPa, %0.2lf%%\n", temp, press, hum);
+    external_temp = temp;
 }
 
 /*!
@@ -233,8 +234,6 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
 
         return rslt;
     }
-
-    printf("Temperature, Pressure, Humidity\n");
 
     /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
      *  and the oversampling configuration. */
@@ -291,9 +290,7 @@ int initializeTemperatureSensor()
         exit(1);
     }
 
-
     /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
-    
 
     dev.intf = BME280_I2C_INTF;
     dev.read = user_i2c_read;
