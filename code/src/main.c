@@ -53,15 +53,13 @@ int contains(char item, char *list, int size){
 
 void printOutput(char subcode, unsigned char* buffer, int size){
     char float_subcodes[2] = {0xC1, 0xC2};
-    char data[7];
-    memcpy(&data, buffer, size);
     if(contains(subcode, float_subcodes, 2)){
-        double output;
-        memcpy(&output, &data[3], sizeof(double));
-        printf("Output: %lf\n", output);
+        float output;
+        memcpy(&output, &buffer[3], sizeof(float));
+        printf("Output: %f\n", output);
     }else {
         int output;
-        memcpy(&output, &data[3], sizeof(int));
+        memcpy(&output, &buffer[3], sizeof(int));
         printf("Output: %d\n", output);
     }
 
