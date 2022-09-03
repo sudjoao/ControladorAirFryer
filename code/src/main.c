@@ -12,79 +12,73 @@
 #include "temperature_sensor.h"
 #include "uart.h"
 #include "util.h"
+#include "lcd.h"
+#include "vars.h"
+#include "gpio.h"
 
-struct bme280_dev bme_connection;
-int temp = 0;
-int ligado = -1;
-int uart0_filestream = -1;
-int i2cFd;
-
-void *uart(void *args)
+void *uart_loop(void *args)
 {
-    int option;
-    int debug = 1;
-    unsigned char output[20];
-    uart0_filestream = open("/dev/serial0", O_RDWR | O_NOCTTY | O_NDELAY);
-    option = 3;
-    if (uart0_filestream == -1)
-    {
-        printf("Erro - Não foi possível iniciar a UART.\n");
-    }
-    else
-    {
-        printf("UART inicializada!\n");
-    }
-    struct termios options;
-    tcgetattr(uart0_filestream, &options);
-    options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-    options.c_iflag = IGNPAR;
-    options.c_oflag = 0;
-    options.c_lflag = 0;
-    tcflush(uart0_filestream, TCIFLUSH);
-    tcsetattr(uart0_filestream, TCSANOW, &options);
-    // initialize_temperature(&bme_connection);
-    while (debug > 0)
-    {
-        // stream_sensor_data_forced_mode(&bme_connection);
-        char code = getCode(option);
-        char subcode = getSubCode(option);
-
-        requestData(code, subcode, uart0_filestream);
-        sleep(1);
-        readOutput(subcode, uart0_filestream, output);
-        if (subcode == 0xC3)
-        {
-            int *additional_info;
-            int command = getIntOutput(output);
-            if (command == 0x01 || command == 0x02)
-            {
-                additional_info = &ligado;
-            }
-            else
-            {
-                additional_info = &temp;
-            }
-
-            handleUserCommand(command, uart0_filestream, additional_info);
-        }
-        sleep(1);
-    }
-    close(uart0_filestream);
+    observerUserCommands();
     return NULL;
 }
-void *temperature(void *args)
+
+void *temperature_loop(void *args)
 {
     initializeTemperatureSensor();
     return NULL;
 }
 
+void *pid_loop(void *args)
+{
+    int i = 0;
+    while (i < 50 && should_run)
+    {
+        printf("Pid loop: %d\n", i);
+        run_pid();
+        sleep(2);
+        i++;
+    }
+    return NULL;
+}
+
+void *lcd_loop(void *args)
+{
+    lcd_config();
+    return NULL;
+}
+
+void *timer_loop(void *args)
+{
+    printf("Start: %d\n", start_time);
+    while (1 && should_run && current_time)
+    {
+        if (start_time)
+        {
+            printf("Time: %d\n", current_time);
+            sleep(60);
+            current_time -= 1;
+        }
+    }
+}
+
 int main()
 {
+    // lcd_config();
+    configUart();
+    init_config();
     pthread_t temperatureId;
-    pthread_create(&temperatureId, NULL, temperature, NULL);
-    // pthread_t uartID;
-    // pthread_create(&uartID, NULL, uart, NULL);
+    pthread_create(&temperatureId, NULL, temperature_loop, NULL);
+    pthread_t uartID;
+    pthread_create(&uartID, NULL, uart_loop, NULL);
+    pthread_t pidID;
+    pthread_create(&pidID, NULL, pid_loop, NULL);
+    pthread_t lcdID;
+    pthread_create(&lcdID, NULL, lcd_loop, NULL);
+    pthread_t timerID;
+    pthread_create(&timerID, NULL, timer_loop, NULL);
     sleep(100);
+    should_run = 0;
+    close(uart0_filestream);
     close(i2cFd);
     return 0;
 }

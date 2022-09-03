@@ -5,9 +5,10 @@ void requestData(char code, char subcode , int uart0_filestream);
 void sendInt(char code, char subcode, int num, int uart0_filestream);
 void sendByte(char code, char subcode, char byte, int uart0_filestream);
 void readOutput(char subcode, int uart0_filestream, unsigned char *output);
-void handleUserCommand(int command, int uart0_filestream, int *additional_info);
+void handleUserCommand(int command, int uart0_filestream);
 float getFloatOutput(unsigned char *buffer);
 int getIntOutput(unsigned char *buffer);
-
+void configUart();
+void observerUserCommands();
 
 #endif /* UART_H_ */
