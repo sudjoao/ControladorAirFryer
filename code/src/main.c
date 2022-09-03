@@ -1,9 +1,10 @@
-#include <fcntl.h>         
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>       
-#include <unistd.h>        
+#include <termios.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #include "bme280.h"
 #include "crc16.h"
@@ -16,10 +17,10 @@ struct bme280_dev bme_connection;
 int temp = 0;
 int ligado = -1;
 int uart0_filestream = -1;
+int i2cFd;
 
-
-
-int main(int argc, const char * argv[]) {
+void *uart(void *args)
+{
     int option;
     int debug = 1;
     unsigned char output[20];
@@ -32,7 +33,7 @@ int main(int argc, const char * argv[]) {
     else
     {
         printf("UART inicializada!\n");
-    }    
+    }
     struct termios options;
     tcgetattr(uart0_filestream, &options);
     options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
@@ -42,20 +43,25 @@ int main(int argc, const char * argv[]) {
     tcflush(uart0_filestream, TCIFLUSH);
     tcsetattr(uart0_filestream, TCSANOW, &options);
     // initialize_temperature(&bme_connection);
-    while(debug>0){
+    while (debug > 0)
+    {
         // stream_sensor_data_forced_mode(&bme_connection);
-        char code = getCode(option); 
+        char code = getCode(option);
         char subcode = getSubCode(option);
 
         requestData(code, subcode, uart0_filestream);
         sleep(1);
-        readOutput(subcode, uart0_filestream,  output);
-        if(subcode == 0xC3){
+        readOutput(subcode, uart0_filestream, output);
+        if (subcode == 0xC3)
+        {
             int *additional_info;
-            int command =getIntOutput(output);
-            if(command == 0x01 || command == 0x02){
+            int command = getIntOutput(output);
+            if (command == 0x01 || command == 0x02)
+            {
                 additional_info = &ligado;
-            } else {
+            }
+            else
+            {
                 additional_info = &temp;
             }
 
@@ -64,5 +70,21 @@ int main(int argc, const char * argv[]) {
         sleep(1);
     }
     close(uart0_filestream);
-   return 0;
+    return NULL;
+}
+void *temperature(void *args)
+{
+    initializeTemperatureSensor();
+    return NULL;
+}
+
+int main()
+{
+    pthread_t temperatureId;
+    pthread_create(&temperatureId, NULL, temperature, NULL);
+    // pthread_t uartID;
+    // pthread_create(&uartID, NULL, uart, NULL);
+    sleep(100);
+    close(i2cFd);
+    return 0;
 }

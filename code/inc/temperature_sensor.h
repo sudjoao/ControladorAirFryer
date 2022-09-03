@@ -77,6 +77,6 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev);
  */
 
 
-void initialize_temperature(struct bme280_dev *dev);
+int initializeTemperatureSensor();
 
 #endif /* TEMPERATURE_SENSOR_H_ */
