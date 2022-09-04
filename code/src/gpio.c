@@ -7,7 +7,6 @@ int init_config(){
     int setup = wiringPiSetup();
     if(setup == -1)
         return -1;
-
     pinMode(4, OUTPUT);
     pinMode(5, OUTPUT);
     softPwmCreate(4, 0, 100);
@@ -20,5 +19,7 @@ void setResistance(int potency) {
 }
 
 void setFan(int potency) {
+  if(potency > 0 && potency < 60)
+    potency = 60;
   softPwmWrite(5, potency);
 }

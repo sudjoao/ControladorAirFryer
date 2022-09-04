@@ -84,18 +84,16 @@ void run_pid()
         printf("Ref tempo: %f\tInternal Temp: %f\tExternal Temp: %f\n", reference_temp, internal_temp, external_temp);
         pid_atualiza_referencia(reference_temp);
         double new_value = pid_controle(internal_temp);
-        if (reference_temp > internal_temp)
+        if (new_value > 0)
         {
             setResistance(100);
             setFan(0);
-            new_value = 100;
             sendInt(0x16, 0xD1, new_value, uart0_filestream);
         }
         else
         {
             setResistance(0);
-            setFan(100);
-            new_value = -100;
+            setFan(new_value*-1);
             sendInt(0x16, 0xD1, new_value, uart0_filestream);
         }
         key=0;

@@ -35,7 +35,7 @@ void *pid_loop(void *args)
     {
         printf("Pid loop: %d\n", i);
         run_pid();
-        sleep(2);
+        sleep(1);
         i++;
     }
     return NULL;
@@ -49,6 +49,7 @@ void *lcd_loop(void *args)
 
 void *timer_loop(void *args)
 {
+
     printf("Start: %d\n", start_time);
     while (1 && should_run && current_time)
     {
@@ -76,7 +77,7 @@ int main()
     pthread_create(&lcdID, NULL, lcd_loop, NULL);
     pthread_t timerID;
     pthread_create(&timerID, NULL, timer_loop, NULL);
-    sleep(60);
+    while(should_run){}
     should_run = 0;
     close(uart0_filestream);
     close(i2cFd);
