@@ -218,5 +218,5 @@ void requestAndSaveOutput(char code, char subcode, unsigned char *output, int sh
         requestData(code, subcode);
         delay(500);
         readOutput(subcode, output);
-    }while(should_retry && retries_count++ < 5 && rx_length < 1);
+    }while(should_retry && retries_count++ < 10 && rx_length < 1);
 }

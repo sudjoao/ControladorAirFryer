@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,13 @@
 #include "lcd.h"
 #include "vars.h"
 #include "gpio.h"
+
+
+pthread_t temperatureId;
+pthread_t uartID;
+pthread_t pidID;
+pthread_t lcdID;
+pthread_t timerID;
 
 void *uart_loop(void *args)
 {
@@ -63,20 +71,25 @@ void *timer_loop(void *args)
     key=0;
 }
 
+void stop_threads(int signal_number){
+    printf("Desligando sistema...\n");
+    pthread_cancel(temperatureId);
+    pthread_cancel(uartID);
+    pthread_cancel(pidID);
+    pthread_cancel(lcdID);
+    pthread_cancel(timerID);
+    should_run = 0;
+}
+
 int main()
 {
-    // lcd_config();
+    signal(SIGINT, stop_threads);
     configUart();
     init_config();
-    pthread_t temperatureId;
     pthread_create(&temperatureId, NULL, temperature_loop, NULL);
-    pthread_t uartID;
     pthread_create(&uartID, NULL, uart_loop, NULL);
-    pthread_t pidID;
     pthread_create(&pidID, NULL, pid_loop, NULL);
-    pthread_t lcdID;
     pthread_create(&lcdID, NULL, lcd_loop, NULL);
-    pthread_t timerID;
     pthread_create(&timerID, NULL, timer_loop, NULL);
     while(should_run){}
     should_run = 0;
