@@ -16,11 +16,9 @@ int init_config(){
 }
 
 void setResistance(int potency) {
-  pinMode(4, OUTPUT);
   softPwmWrite(4, potency);
 }
 
 void setFan(int potency) {
-  pinMode(5, OUTPUT);
-  softPwmWrite(4, potency);
+  softPwmWrite(5, potency);
 }

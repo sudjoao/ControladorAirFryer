@@ -240,7 +240,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
     req_delay = bme280_cal_meas_delay(&dev->settings);
 
     /* Continuously stream sensor data */
-    while (1)
+    while (should_run)
     {
         /* Set the sensor to forced mode */
         rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);

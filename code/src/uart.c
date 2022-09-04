@@ -8,6 +8,7 @@
 #include "crc16.h"
 #include "vars.h"
 #include "util.h"
+#include "gpio.h"
 
 void requestData(char code, char subcode, int uart0_filestream);
 void sendInt(char code, char subcode, int num, int uart0_filestream);
@@ -47,7 +48,6 @@ void requestData(char code, char subcode, int uart0_filestream)
             printf("UART TX error\n");
         }
     }
-    sleep(1);
 }
 
 void sendByte(char code, char subcode, char byte, int uart0_filestream)
@@ -126,9 +126,12 @@ void handleUserCommand(int command, int uart0_filestream)
     {
         if (on != 0)
         {
+            should_run = 0;
             on = 0;
             printf("Enviando comando de desligar\n");
             sendByte(0x16, 0xD3, 0, uart0_filestream);
+            setFan(100);
+            setResistance(0);
         }
     }
     else if (command == 0x03)
@@ -136,12 +139,16 @@ void handleUserCommand(int command, int uart0_filestream)
         printf("Enviando comando de começar\n");
         running = 1;
         sendByte(0x16, 0xD5, 1, uart0_filestream);
+        sendInt(0x16, 0xD1, -100, uart0_filestream);
     }
     else if (command == 0x04)
     {
         running = 0;
         printf("Enviando comando de terminar\n");
         sendByte(0x16, 0xD5, 0, uart0_filestream);
+        setFan(100);
+        setResistance(0);
+        sendInt(0x16, 0xD1, -100, uart0_filestream);
     }
     else if (command == 0x05)
     {
@@ -187,21 +194,22 @@ void observerUserCommands()
     int option;
     unsigned char output[20];
     option = 3;
-    int i = 0;
-    while (i < 50)
+    while (should_run)
     {
+        while(key){}
+        key = 1;
         char code = getCode(option);
         char subcode = getSubCode(option);
 
         requestData(code, subcode, uart0_filestream);
-        sleep(1);
+        delay(500);
         readOutput(subcode, uart0_filestream, output);
         if (subcode == 0xC3)
         {
             int command = getIntOutput(output);
             handleUserCommand(command, uart0_filestream);
         }
-        sleep(1);
-        i++;
+        key=0;
+        delay(500);
     }
 }

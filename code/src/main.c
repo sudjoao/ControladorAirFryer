@@ -31,7 +31,7 @@ void *temperature_loop(void *args)
 void *pid_loop(void *args)
 {
     int i = 0;
-    while (i < 50 && should_run)
+    while (i < 100 && should_run)
     {
         printf("Pid loop: %d\n", i);
         run_pid();
@@ -76,7 +76,7 @@ int main()
     pthread_create(&lcdID, NULL, lcd_loop, NULL);
     pthread_t timerID;
     pthread_create(&timerID, NULL, timer_loop, NULL);
-    sleep(100);
+    sleep(60);
     should_run = 0;
     close(uart0_filestream);
     close(i2cFd);
