@@ -69,32 +69,28 @@ void run_pid()
     {
         while(key){}
         key=1;
-        printf("Running: %d\tCurrent time= %d\n", running, current_time);
-        printf("Tentando ler temp interna\n");
-        requestData(0x23, 0xC1, uart0_filestream);
-        delay(500);
-        readOutput(0xC1, uart0_filestream, output1);
+        requestAndSaveOutput(0x23, 0xC1, output1, 1);
         internal_temp = getFloatOutput(output1);
-        printf("Tentando ler temp de ref\n");
         sleep(1);
-        requestData(0x23, 0xC2, uart0_filestream);
-        delay(500);
-        readOutput(0xC2, uart0_filestream, output2);
+        requestAndSaveOutput(0x23, 0xC2, output2, 1);
         reference_temp = getFloatOutput(output2);
-        printf("Ref tempo: %f\tInternal Temp: %f\tExternal Temp: %f\n", reference_temp, internal_temp, external_temp);
+        printf("TR\tTI\tTE\tTime\n");
+        printf("%f\t%f\t%f\t%d\n", reference_temp, internal_temp, external_temp, current_time);
         pid_atualiza_referencia(reference_temp);
         double new_value = pid_controle(internal_temp);
+        if((int)internal_temp > 0 && (int)reference_temp > 0 && internal_temp >= reference_temp)
+            start_time = 1;
         if (new_value > 0)
         {
             setResistance(100);
             setFan(0);
-            sendInt(0x16, 0xD1, new_value, uart0_filestream);
+            sendInt(0x16, 0xD1, new_value);
         }
         else
         {
             setResistance(0);
             setFan(new_value*-1);
-            sendInt(0x16, 0xD1, new_value, uart0_filestream);
+            sendInt(0x16, 0xD1, new_value);
         }
         key=0;
         delay(500);

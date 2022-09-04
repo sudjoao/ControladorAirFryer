@@ -10,13 +10,14 @@
 #include "util.h"
 #include "gpio.h"
 
-void requestData(char code, char subcode, int uart0_filestream);
-void sendInt(char code, char subcode, int num, int uart0_filestream);
-void sendByte(char code, char subcode, char byte, int uart0_filestream);
-void readOutput(char subcode, int uart0_filestream, unsigned char *output);
-void handleUserCommand(int command, int uart0_filestream);
+void requestData(char code, char subcode);
+void sendInt(char code, char subcode, int num);
+void sendByte(char code, char subcode, char byte);
+void readOutput(char subcode, unsigned char *output);
+void handleUserCommand(int command);
 float getFloatOutput(unsigned char *buffer);
 int getIntOutput(unsigned char *buffer);
+void requestAndSaveOutput(char code, char subcode, unsigned char *output, int should_retry);
 
 float getFloatOutput(unsigned char *buffer)
 {
@@ -32,7 +33,7 @@ int getIntOutput(unsigned char *buffer)
     return output;
 }
 
-void requestData(char code, char subcode, int uart0_filestream)
+void requestData(char code, char subcode)
 {
     unsigned char infos[7] = {0x01, code, subcode, 3, 9, 1, 0};
     unsigned char tx_buffer[20];
@@ -50,7 +51,7 @@ void requestData(char code, char subcode, int uart0_filestream)
     }
 }
 
-void sendByte(char code, char subcode, char byte, int uart0_filestream)
+void sendByte(char code, char subcode, char byte)
 {
     unsigned char infos[7] = {0x01, code, subcode, 3, 9, 1, 0};
     unsigned char tx_buffer[20];
@@ -69,7 +70,7 @@ void sendByte(char code, char subcode, char byte, int uart0_filestream)
     }
 }
 
-void sendInt(char code, char subcode, int num, int uart0_filestream)
+void sendInt(char code, char subcode, int num)
 {
     unsigned char infos[7] = {0x01, code, subcode, 3, 9, 1, 0};
     unsigned char tx_buffer[20];
@@ -88,11 +89,11 @@ void sendInt(char code, char subcode, int num, int uart0_filestream)
     }
 }
 
-void readOutput(char subcode, int uart0_filestream, unsigned char *output)
+void readOutput(char subcode, unsigned char *output)
 {
     if (uart0_filestream != -1)
     {
-        int rx_length = read(uart0_filestream, (void *)output, 20);
+        rx_length = read(uart0_filestream, (void *)output, 20);
         if (rx_length < 0)
         {
             not_read = 1;
@@ -111,14 +112,13 @@ void readOutput(char subcode, int uart0_filestream, unsigned char *output)
     }
 }
 
-void handleUserCommand(int command, int uart0_filestream)
+void handleUserCommand(int command)
 {
     if (command == 0x01)
     {
         if (on != 1)
         {
-            printf("Enviando comando de ligar\n");
-            sendByte(0x16, 0xD3, 1, uart0_filestream);
+            sendByte(0x16, 0xD3, 1);
             on = 1;
         }
     }
@@ -128,43 +128,38 @@ void handleUserCommand(int command, int uart0_filestream)
         {
             should_run = 0;
             on = 0;
-            printf("Enviando comando de desligar\n");
-            sendByte(0x16, 0xD3, 0, uart0_filestream);
+            sendByte(0x16, 0xD3, 0);
             setFan(100);
             setResistance(0);
         }
     }
     else if (command == 0x03)
     {
-        printf("Enviando comando de começar\n");
         running = 1;
-        sendByte(0x16, 0xD5, 1, uart0_filestream);
-        sendInt(0x16, 0xD1, -100, uart0_filestream);
+        sendByte(0x16, 0xD5, 1);
+        sendInt(0x16, 0xD1, -100);
     }
     else if (command == 0x04)
     {
         running = 0;
-        printf("Enviando comando de terminar\n");
-        sendByte(0x16, 0xD5, 0, uart0_filestream);
+        sendByte(0x16, 0xD5, 0);
         setFan(100);
         setResistance(0);
-        sendInt(0x16, 0xD1, -100, uart0_filestream);
+        sendInt(0x16, 0xD1, -100);
     }
     else if (command == 0x05)
     {
-        current_time += 3;
-        printf("Enviando comando de temperatura\n");
-        sendInt(0x16, 0xD6, current_time, uart0_filestream);
+        current_time += 1;
+        sendInt(0x16, 0xD6, current_time);
     }
     else if (command == 0x06)
     {
-        current_time -= 3;
-        printf("Enviando comando de temperatura\n");
-        sendInt(0x16, 0xD6, current_time, uart0_filestream);
+        current_time -= 1;
+        sendInt(0x16, 0xD6, current_time);
     }
     else if (command == 0x07)
     {
-        sendInt(0x16, 0xD3, 1, uart0_filestream);
+        sendInt(0x16, 0xD3, 1);
     }
 }
 
@@ -196,20 +191,32 @@ void observerUserCommands()
     option = 3;
     while (should_run)
     {
-        while(key){}
+        while (key)
+        {
+        }
         key = 1;
         char code = getCode(option);
         char subcode = getSubCode(option);
 
-        requestData(code, subcode, uart0_filestream);
+        requestData(code, subcode);
         delay(500);
-        readOutput(subcode, uart0_filestream, output);
+        readOutput(subcode, output);
         if (subcode == 0xC3)
         {
             int command = getIntOutput(output);
-            handleUserCommand(command, uart0_filestream);
+            handleUserCommand(command);
         }
-        key=0;
+        key = 0;
         delay(500);
     }
+}
+
+
+void requestAndSaveOutput(char code, char subcode, unsigned char *output, int should_retry){
+    int retries_count = 0;
+    do {
+        requestData(code, subcode);
+        delay(500);
+        readOutput(subcode, output);
+    }while(should_retry && retries_count++ < 5 && rx_length < 1);
 }

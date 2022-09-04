@@ -33,7 +33,6 @@ void *pid_loop(void *args)
     int i = 0;
     while (i < 100 && should_run)
     {
-        printf("Pid loop: %d\n", i);
         run_pid();
         sleep(1);
         i++;
@@ -49,17 +48,19 @@ void *lcd_loop(void *args)
 
 void *timer_loop(void *args)
 {
-
-    printf("Start: %d\n", start_time);
-    while (1 && should_run && current_time)
+    while (should_run && current_time)
     {
         if (start_time)
         {
-            printf("Time: %d\n", current_time);
             sleep(60);
             current_time -= 1;
         }
     }
+    while(key){}
+    key=1;
+    sendInt(0x16, 0xD6, current_time);
+    running = 0;
+    key=0;
 }
 
 int main()

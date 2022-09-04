@@ -61,14 +61,10 @@ int lcd_config()   {
   while (should_run)   {
     if(running == 1){
       lcdLoc(LINE1);
-      if( internal_temp < reference_temp){
-        typeln("Hot ");
-      }
-      else{
-        typeln("Cold ");
-      }
       typeln("Time: ");
       typeInt(current_time);
+      typeln(" TE: ");
+      typeFloat(external_temp);
       lcdLoc(LINE2);
       typeln("TI: ");
       typeFloat(internal_temp);
